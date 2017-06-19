@@ -1,0 +1,65 @@
+#from pybossa.view.projects import blueprint
+from flask import Blueprint,request,Response,render_template,redirect,flash,current_app
+import time
+from flask.ext.babel import gettext
+from .forms import *
+from pybossa.util import (Pagination, admin_required, get_user_id_or_ip, rank,
+                          handle_content_type, redirect_content_type,
+                          get_avatar_url)
+from flask.ext.login import login_required, current_user
+from pybossa.core import uploader
+import os
+blueprint = Blueprint('file_test', __name__,template_folder='templates')
+from file_extraction import extract_files_local
+
+
+CONTAINER="local_upload_directory"
+parent_path=current_app.root_path[:current_app.root_path.rfind("/")]
+@blueprint.route('/hello')
+def hello():
+	upload_form = TaskUpload()
+	return  render_template('/upload_form.html',upload_form=upload_form)
+
+
+def allowed_file(filename):
+    """Return True if valid, otherwise false."""
+    if '.' in filename:
+        if filename.rsplit('.', 1)[1].lower()=="zip" :
+            return True
+        elif "tar.gz" in filename and filename.rsplit('.', 1)[1].lower()=="gz" :
+            return True
+    return False
+
+
+@blueprint.route('/custom_upload_task', methods=['GET', 'POST'])
+#@login_required
+def upload_task():
+    try:
+    	if request.method == 'POST':
+    		upload_form = TaskUpload()
+    		if upload_form.validate_on_submit():
+    			_file = request.files['avatar']
+                extract_files_local((parent_path+"/uploads/"+CONTAINER),_file.filename)
+
+                if (_file and allowed_file(_file.filename) and \
+                    _file.save(os.path.join((parent_path+'/uploads/'+CONTAINER) , _file.filename))):
+    				flash("You have successfully uploaded the files",'success')
+    			else:
+    				flash('Only zip and tar.gz extensions are allowed'+current_app.root_path,'danger')
+    		else:
+    			flash(gettext('Please upload the file'),'alert')
+
+    	upload_form = TaskUpload()
+    	response = dict(template='/upload_form.html',upload_form=upload_form)
+    	return handle_content_type(response)
+    except Exception:
+        return False
+
+
+
+
+
+"""print "%s"%request.method
+prefix = time.time()
+_file.filename = "project_%s_shruthi_%i.png" % (1, prefix)
+container = "shruthi"  """

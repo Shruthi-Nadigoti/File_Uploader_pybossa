@@ -1,0 +1,52 @@
+<!-- extend base layout -->
+{% extends "/projects/base.html" %}
+{% include "_flash_messages.html" %}
+{% from "projects/_helpers.html" import render_project_card_option %}
+{% set active_link  = "tasks" %}
+{% from "_formhelpers.html" import render_field, render_checkbox_field %}
+
+{% block projectcontent %}
+<script>
+	function addQuestion(){
+		try{
+		var d=document.getElementById("add");
+		var y=document.getElementById("add").children;
+		 for(var i=0;i<y.length;i++)
+		 {
+		 	if(y[i].children[0].value=="")
+		 		d.removeChild(y[i]);
+		 }
+		// var x='<div class="><input type="text" size="50" placeholder="add your question here" name="add"></div>';
+		//document.getElementById("add").innerHTML+=x;
+		div=document.createElement("div");
+		div.setAttribute("class","form-group");
+		input=document.createElement("input");
+		input.setAttribute("type","text");
+		input.setAttribute("_class","span");
+		input.setAttribute("size","50");
+		input.setAttribute("placeholder","add your tag here");
+		input.setAttribute("name","add");
+		d.appendChild(div);
+		div.appendChild(input);
+		}catch(e)
+		{
+			alert(e);
+		}
+	}
+</script>
+ <form method="post">
+	 <fieldset>
+	 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+<p>Which type of Tags you need ?</p>
+ 	{% for item in arr %}
+		<div class="checkbox">
+ 		 <label><input type="checkbox" name="hello" value="{{ item }}">{{ item }}</label>
+		</div>
+	{% endfor %}
+<div id="add">
+</div>
+<button type="button" class="btn btn-primary" onclick="addQuestion()">Add Tag</button>
+<input type="submit" class="btn btn-primary" >
+</fieldset>
+</form>
+{% endblock %}
