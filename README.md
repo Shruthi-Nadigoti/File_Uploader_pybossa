@@ -1,9 +1,9 @@
-#### File_Uploader_pybossa
+# File Importer In Pybossa
 This is Pybossa plugin to import the files from the local machine.
-#### How to Import the files
-## Upload File
-It accepts only zip and tar.gz extension files.In this we can put images,documents,videos,audios related files.We can have subfolders also.
-## Add Question
+## How to Import the files
+- ## Upload File
+       -It accepts only zip and tar.gz extension files.In this we can put images,documents,videos,audios related files.We can have subfolders also.
+- ## Add Question
 we should write the questions for files which we have uploaded.That's it you can see succesful uploaded message on your screen
 Note:If the questions are already uploaded for particular class of file then it won't ask to write question for corresponding class
 ##Installation
