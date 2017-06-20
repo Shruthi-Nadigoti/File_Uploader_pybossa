@@ -38,6 +38,6 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
        ```
         
         
-Now restart the server.Now you can see Fundamental Research Importer(File Uploader) in Importer options
+Now restart the server.You can see Fundamental Research Importer(File Uploader) in Importer options
 
 
