@@ -1,4 +1,4 @@
-# File Importer In Pybossa
+# File Importer For Pybossa
 This is Pybossa plugin to import the files from the local machine.
 
 ## Installation
