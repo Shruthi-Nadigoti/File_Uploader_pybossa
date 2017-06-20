@@ -22,7 +22,8 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
 
 ```
 
-  - In pybossa/importers/importer.py file make some changes as below code
+  - In pybossa/importers/importer.py file make some changes to the constructor as below code
+  
     ```
      def __init__(self):
         """Init method."""
@@ -33,6 +34,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
                                frg="",
                                )
         self._importer_constructor_params = dict()
+        
        ```
         
         
