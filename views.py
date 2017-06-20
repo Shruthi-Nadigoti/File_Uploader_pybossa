@@ -14,21 +14,25 @@ import os,shutil
 from pybossa.core import db
 
 from pybossa.view.projects import sanitize_project_owner,project_by_shortname,pro_features
-
+from pybossa.cache.helpers import add_custom_contrib_button_to
 from pybossa.model.task import Task
 import json
 from pybossa.core import task_repo,project_repo
 from pybossa.pro_features import ProFeatureHandler
+
 from pybossa.model.project import Project
 from pybossa.cache import projects as cached_projects
 from sqlalchemy import update
 
+
 blueprint = Blueprint('file_test', __name__,template_folder='templates',static_folder="static")
 zipobj={}
 list_container=[]
+previous_data=[]
 CONTAINER="local_upload_directory"
 parent_path=current_app.root_path[:current_app.root_path.rfind("/")]
 @blueprint.route('/hello')
+@login_required
 def hello():
     return redirect(url_for("file_test.select_type"))
 
@@ -50,8 +54,10 @@ def check_file_size(file_path):
     print size
     return False
 
-def add_task(project_id,project_path):
-
+def add_task(project_id):
+    global zipobj
+    print zipobj
+    project_path=zipobj["zzz"]
     for i in ["images","videos","documents","audios"]:
         if os.path.exists(project_path+"/"+i):
             print "in if"
@@ -60,19 +66,22 @@ def add_task(project_id,project_path):
                 dictobj={"type":i,"path":p,"subtype":file.rsplit('.',1)[1].lower()}
                 s=json.dumps(dictobj)
                 #print s.type
-                #task = Task(project_id=project_id)
-                #task.info=dictobj
-                #task_repo.save(task)
+                task = Task(project_id=project_id)
+                task.info=dictobj
+                task_repo.save(task)
 
 
 @blueprint.route('/<short_name>/tasks/custom_upload_task',methods=['GET','POST'])
+@login_required
 def upload_task(short_name):
-    try:
         (project, owner, n_tasks, n_task_runs,
          overall_progress, last_activity,
          n_results) = project_by_shortname(short_name)
         pro=pro_features()
-        project_sanitized, owner_sanitized = sanitize_project_owner(project, owner, current_user)
+        project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+        feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+        autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+        project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
         if request.method=='POST':
             upload_form=TaskUpload()
             if upload_form.validate_on_submit():
@@ -85,7 +94,7 @@ def upload_task(short_name):
                         global zipobj
                         zipobj=extract_files_local((parent_path+"/uploads/"+CONTAINER),_file.filename,project.id)
                         print zipobj["zzz"]
-                        add_task(project.id,zipobj["zzz"])
+                        #add_task(project.id,zipobj["zzz"])
                         return redirect_content_type(url_for('.select_type',
                                                              short_name=short_name))
                     else:
@@ -101,17 +110,20 @@ def upload_task(short_name):
                        project=project_sanitized,
                        pro_features=pro
                        )
+
         return handle_content_type(response)
-    except Exception:
-        return False
 
 @blueprint.route('/<short_name>/tasks/select_type',methods=['GET', 'POST'])# this url is for the selecting types of folders which user want
+@login_required
 def select_type(short_name):
     (project, owner, n_tasks, n_task_runs,
      overall_progress, last_activity,
      n_results) = project_by_shortname(short_name)
     pro=pro_features()
-    project_sanitized, owner_sanitized = sanitize_project_owner(project, owner, current_user)
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     print short_name
     li=["Images","Videos",'Audios','Documents'] #classification files
     if request.method == 'POST':
@@ -122,67 +134,74 @@ def select_type(short_name):
                 n=request.form.getlist('filepath')[0]#this is parent path of the folder which were unchecked by user
                 if os.path.exists(n+"/"+i.lower()):
                     shutil.rmtree(n+"/"+i.lower()) #deletion of folder
-        for i in list_container:
-            b=list_container.index(i)
-            del list_container[b]
-            print i.lower()
-            return redirect_content_type(url_for('.'+i.lower(),short_name=short_name))
+        print "Going to function"
+        p=draft_project(project)
+        if(len(previous_data)!=0):
+            l=" , ".join(previous_data)
+            print l
+            flash(l+" questions are already uploaded","info")
+        if(p!="-1"):
+            return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+        else:
+            return redirect_content_type(url_for('.success',short_name=short_name))
     global zipobj
-    #for i in li:
-    #    if(i not in zipobj.keys()):
-    #        flash('You do not have any '+i,'info') #giving information about the folders which user don't have
     return  render_template('select_type.html',arr=zipobj,project=project_sanitized,
     pro_features=pro) #sending the classified information to the select_type.html
-
-
-
-@blueprint.route('/<short_name>/tasks/documents', methods=['GET', 'POST'])
-def documents(short_name):
-    (project, owner, n_tasks, n_task_runs,
-     overall_progress, last_activity,
-     n_results) = project_by_shortname(short_name)
-    pro=pro_features()
-    project_sanitized, owner_sanitized = sanitize_project_owner(project, owner, current_user)
-    if request.method == 'POST':
-        if(request.form.get('question','')==""):
-            flash("Atleast 1 question is required","warning")
-            return  render_template('documents.html',project=project_sanitized,
-            pro_features=pro)
-        dictobj={"question":request.form.getlist('question'),"answers":[]}
-        print dictobj# here we have to store it in database
-        store_questions("documents",dictobj,project)
-        print project.info["question"]
-        if(request.form.get('submit','')=="submit"):
-            global list_container
-            print len(list_container)
-            if(len(list_container)<1):
-                return "success"
-            else:
-                for i in list_container:
-                    b=list_container.index(i)
-                    del list_container[b]
-                    print i.lower()
-                    return redirect_content_type(url_for('.'+i.lower(),short_name=short_name))
-    return  render_template('documents.html',project=project_sanitized,
-    pro_features=pro) #we are going to tags.html
 
 
 def store_questions(type_obj,dictobj,project):
     if "question" not in project.info.keys():
         project.info.update({"question":{"images":[],"videos":[],"documents":[],"audios":[]}})
         db.session.commit()
-
     project.info["question"][type_obj].append(dictobj)
     print project.info["question"][type_obj]
     project_repo.update(project)
 
+def draft_project(project):
+    if "question" not in project.info.keys():
+        project.info.update({"question":{"images":[],"videos":[],"documents":[],"audios":[]}})
+        db.session.commit()
+
+    for i in list_container:
+        if len(project.info["question"][i.lower()])==0 :
+            b=list_container.index(i)
+            del list_container[b]
+            return i.lower()
+        else:
+            global previous_data
+            previous_data.append(i)
+    return "-1"
+
+
+@blueprint.route('/<short_name>/tasks/success', methods=['GET', 'POST'])
+@login_required
+def success(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    add_task(project.id)
+    global previous_data
+    previous_data=[]
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    return  render_template('success.html',project=project_sanitized,
+    pro_features=pro) #we are going to tags.html
+
+
 @blueprint.route('/<short_name>/tasks/images', methods=['GET', 'POST'])
+@login_required
 def images(short_name):
     (project, owner, n_tasks, n_task_runs,
      overall_progress, last_activity,
      n_results) = project_by_shortname(short_name)
     pro=pro_features()
-    project_sanitized, owner_sanitized = sanitize_project_owner(project, owner, current_user)
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
         if(request.form.get('question','')==""):
             flash("Please enter the question","warning")
@@ -199,28 +218,60 @@ def images(short_name):
         #project = Project.query.filter_by(short_name=short_name).first()
         print project.info.keys()
         print project.info["question"]
-
         if(request.form.get('submit','')=="submit"):
-            global list_container
-            print len(list_container)
-            if(len(list_container)<1):
-                return "success"
-            else:
-                for i in list_container:
-                    b=list_container.index(i)
-                    del list_container[b]
-                    return redirect_content_type(url_for('.'+i.lower(),short_name=short_name))
+                p=draft_project(project)
+                if(p!="-1"):
+                    return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+                else:
+                    return redirect_content_type(url_for('.success',short_name=short_name))
     return  render_template('images.html',project=project_sanitized,
     pro_features=pro) #we are going to tags.html
 
 
+
+@blueprint.route('/<short_name>/tasks/documents', methods=['GET', 'POST'])
+@login_required
+def documents(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if request.method == 'POST':
+        if(request.form.get('question','')==""):
+            flash("Atleast 1 question is required","warning")
+            return  render_template('documents.html',project=project_sanitized,
+            pro_features=pro)
+        dictobj={"question":request.form.getlist('question'),"answers":[]}
+        print dictobj# here we have to store it in database
+        store_questions("documents",dictobj,project)
+        print project.info["question"]
+        if(request.form.get('submit','')=="submit"):
+            p=draft_project(project)
+            if(p!="-1"):
+                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+            else:
+                return redirect_content_type(url_for('.success',short_name=short_name))
+    return  render_template('documents.html',project=project_sanitized,
+    pro_features=pro) #we are going to tags.html
+
+
+
+
 @blueprint.route('/<short_name>/tasks/videos', methods=['GET', 'POST'])
+@login_required
 def videos(short_name):
     (project, owner, n_tasks, n_task_runs,
      overall_progress, last_activity,
      n_results) = project_by_shortname(short_name)
     pro=pro_features()
-    project_sanitized, owner_sanitized = sanitize_project_owner(project, owner, current_user)
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
         if(request.form.get('question','')==""):
             flash("Atleast 1 question is required","warning")
@@ -231,26 +282,25 @@ def videos(short_name):
         store_questions("videos",dictobj,project)
         project_repo.update(project)
         if(request.form.get('submit','')=="submit"):
-            global list_container
-            print len(list_container)
-            if(len(list_container)<1):
-                return "success"
+            p=draft_project(project)
+            if(p!="-1"):
+                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
             else:
-                for i in list_container:
-                    b=list_container.index(i)
-                    del list_container[b]
-                    print i.lower()
-                    return redirect_content_type(url_for('.'+i.lower(),short_name=short_name))
+                return redirect_content_type(url_for('.success',short_name=short_name))
     return  render_template('videos.html',project=project_sanitized,
     pro_features=pro) #we are going to tags.html
 
 @blueprint.route('/<short_name>/tasks/audios', methods=['GET', 'POST'])
+@login_required
 def audios(short_name):
     (project, owner, n_tasks, n_task_runs,
      overall_progress, last_activity,
      n_results) = project_by_shortname(short_name)
     pro=pro_features()
-    project_sanitized, owner_sanitized = sanitize_project_owner(project, owner, current_user)
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
         if(request.form.get('question','')==""):
             flash("Atleast 1 question is required","warning")
@@ -260,15 +310,10 @@ def audios(short_name):
         print dictobj# here we have to store it in database
         store_questions("audios",dictobj,project)
         if(request.form.get('submit','')=="submit"):
-            global list_container
-            print len(list_container)
-            if(len(list_container)<1):
-                return "success"
+            p=draft_project(project)
+            if(p!="-1"):
+                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
             else:
-                for i in list_container:
-                    b=list_container.index(i)
-                    del list_container[b]
-                    print i.lower()
-                    return redirect_content_type(url_for('.'+i.lower(),short_name=short_name))
+                return redirect_content_type(url_for('.success',short_name=short_name))
     return  render_template('videos.html',project=project_sanitized,
     pro_features=pro) #we are going to tags.html
