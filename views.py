@@ -54,10 +54,18 @@ def check_file_size(file_path):
     print size
     return False
 
-def add_task(project_id):
-    global zipobj
-    print zipobj
-    project_path=zipobj["zzz"]
+def add_task(project):
+    project_id=project.id
+    project_path=session["zzz"]
+    if(session.get("question") is not None):
+        for i in ["images","videos","documents","audios"]:
+            if len(session["question"][i])!=0:
+                project.info["question"][i].extend(session["question"][i])
+            print session["question"]
+    project_repo.update(project)
+    session.pop('question', None)
+
+
     for i in ["images","videos","documents","audios"]:
         if os.path.exists(project_path+"/"+i):
             print "in if"
@@ -93,6 +101,7 @@ def upload_task(short_name):
 
                         global zipobj
                         zipobj=extract_files_local((parent_path+"/uploads/"+CONTAINER),_file.filename,project.id)
+                        session["zzz"]=zipobj["zzz"]
                         print zipobj["zzz"]
                         #add_task(project.id,zipobj["zzz"])
                         return redirect_content_type(url_for('.select_type',
@@ -150,18 +159,21 @@ def select_type(short_name):
 
 
 def store_questions(type_obj,dictobj,project):
-    if "question" not in project.info.keys():
-        project.info.update({"question":{"images":[],"videos":[],"documents":[],"audios":[]}})
-        db.session.commit()
-    project.info["question"][type_obj].append(dictobj)
+    project.info["question"][type_obj].extend(dictobj)
     print project.info["question"][type_obj]
     project_repo.update(project)
 
 def draft_project(project):
+    if(session.get("question") is not None):
+        print "in draft"
+        print session["question"]
+    else:
+        print "session is None"
     if "question" not in project.info.keys():
         project.info.update({"question":{"images":[],"videos":[],"documents":[],"audios":[]}})
-        db.session.commit()
-
+        project_repo.update(project)
+    if session.get('question') is None:
+        session["question"]={"images":[],"videos":[],"audios":[],"documents":[]}
     for i in list_container:
         if len(project.info["question"][i.lower()])==0 :
             b=list_container.index(i)
@@ -180,7 +192,7 @@ def success(short_name):
      overall_progress, last_activity,
      n_results) = project_by_shortname(short_name)
     pro=pro_features()
-    add_task(project.id)
+    add_task(project)
     global previous_data
     previous_data=[]
     project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
@@ -204,20 +216,10 @@ def images(short_name):
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
         if(request.form.get('question','')==""):
-            flash("Please enter the question","warning")
+            flash("Atleast 1 question is required","warning")
             return  render_template('images.html',project=project_sanitized,
             pro_features=pro)
-        if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
-            flash("Atleast 2 answers are required","warning")
-            return  render_template('images.html',project=project_sanitized,
-            pro_features=pro)
-        dictobj={"question":request.form.get('question'),"answers":request.form.getlist('answer')}
-        print dictobj# here we have to store it in database
-        #pj = Project.query.filter_by(short_name=short_name).first()
-        store_questions("images",dictobj,project)
-        #project = Project.query.filter_by(short_name=short_name).first()
-        print project.info.keys()
-        print project.info["question"]
+        session["question"]["images"]=request.form.getlist('question')
         if(request.form.get('submit','')=="submit"):
                 p=draft_project(project)
                 if(p!="-1"):
@@ -247,7 +249,8 @@ def documents(short_name):
             pro_features=pro)
         dictobj={"question":request.form.getlist('question'),"answers":[]}
         print dictobj# here we have to store it in database
-        store_questions("documents",dictobj,project)
+        session["question"]["documents"]=request.form.getlist('question')
+        #store_questions("documents",dictobj,project)
         print project.info["question"]
         if(request.form.get('submit','')=="submit"):
             p=draft_project(project)
@@ -279,7 +282,8 @@ def videos(short_name):
             pro_features=pro)
         dictobj={"question":request.form.getlist('question'),"answers":[]}
         print dictobj# here we have to store it in database
-        store_questions("videos",dictobj,project)
+        session["question"]["videos"]=request.form.getlist('question')
+        #store_questions("videos",dictobj,project)
         project_repo.update(project)
         if(request.form.get('submit','')=="submit"):
             p=draft_project(project)
@@ -308,7 +312,8 @@ def audios(short_name):
             pro_features=pro)
         dictobj={"question":request.form.getlist('question'),"answers":[]}
         print dictobj# here we have to store it in database
-        store_questions("audios",dictobj,project)
+        session["question"]["audios"]=request.form.getlist('question')
+        #store_questions("audios",dictobj,project)
         if(request.form.get('submit','')=="submit"):
             p=draft_project(project)
             if(p!="-1"):

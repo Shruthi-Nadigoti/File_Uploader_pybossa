@@ -1,8 +1,8 @@
 {
-    "identifier": "file_test",
-    "name": "File Test",
-    "author": "sh4nks",
-    "license": "BSD",
+    "identifier": "file_uploader",
+    "name": "File Uploader",
+    "author": "shruthi",
+    "license": "-",
     "description": "A File uploading Plugin.",
     "version": "1.0.0"
 }

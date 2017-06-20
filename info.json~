@@ -1,0 +1,8 @@
+{
+    "identifier": "file_test",
+    "name": "File Test",
+    "author": "sh4nks",
+    "license": "BSD",
+    "description": "A File uploading Plugin.",
+    "version": "1.0.0"
+}
