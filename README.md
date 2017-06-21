@@ -2,7 +2,7 @@
 This is Pybossa plugin to import the files from the local machine.
 
 ## Installation
-- Clone this repository paste it in pybossa/pybossa/plugins directory.
+- Clone this repository and rename it to file_uploader and paste it in pybossa/pybossa/plugins directory.
 - Make the following changes 
    - Create frg.html file in pybossa/themes/default/templates/projects/tasks directory.
    - Write the following code in it
