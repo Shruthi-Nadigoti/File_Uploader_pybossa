@@ -63,21 +63,21 @@ def add_task(project):
                 project.info["question"][i].extend(session["question"][i])
             print session["question"]
     project_repo.update(project)
+
+
+    if(session.get("question") is not None):
+        for i in ["images","videos","documents","audios"]:
+            if os.path.exists(project_path+"/"+i):
+                print "in if"
+                for file in os.listdir(project_path+"/"+i):
+                    p=os.path.join(project_path+"/"+i,file)
+                    dictobj={"type":i,"path":p,"subtype":file.rsplit('.',1)[1].lower()}
+                    s=json.dumps(dictobj)
+                    #print s.type
+                    task = Task(project_id=project_id)
+                    task.info=dictobj
+                    task_repo.save(task)
     session.pop('question', None)
-
-
-    for i in ["images","videos","documents","audios"]:
-        if os.path.exists(project_path+"/"+i):
-            print "in if"
-            for file in os.listdir(project_path+"/"+i):
-                p=os.path.join(project_path+"/"+i,file)
-                dictobj={"type":i,"path":p,"subtype":file.rsplit('.',1)[1].lower()}
-                s=json.dumps(dictobj)
-                #print s.type
-                task = Task(project_id=project_id)
-                task.info=dictobj
-                task_repo.save(task)
-
 
 @blueprint.route('/<short_name>/tasks/custom_upload_task',methods=['GET','POST'])
 @login_required
