@@ -53,18 +53,19 @@ def check_file_size(file_path):
         return True
     print size
     return False
+def store_questions(project):
 
-def add_task(project):
-    project_id=project.id
-    project_path=session["zzz"]
     if(session.get("question") is not None):
         for i in ["images","videos","documents","audios"]:
             if len(session["question"][i])!=0:
-                project.info["question"][i].extend(session["question"][i])
+                project.info["question"][i]=session["question"][i]
             print session["question"]
     project_repo.update(project)
 
-
+def add_task(project):
+    store_questions(project)
+    project_id=project.id
+    project_path=session["zzz"]
     if(session.get("question") is not None):
         for i in ["images","videos","documents","audios"]:
             if os.path.exists(project_path+"/"+i):
@@ -87,6 +88,7 @@ def upload_task(short_name):
          n_results) = project_by_shortname(short_name)
         pro=pro_features()
         project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+
         feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
         autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
         project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
@@ -121,6 +123,112 @@ def upload_task(short_name):
                        )
 
         return handle_content_type(response)
+@blueprint.route('/<short_name>/tasks/edit_question',methods=['GET', 'POST'])
+@login_required
+def edit_question(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    print project_button["contrib_button"]
+    if "importer_type" in project.info.keys():
+        if(project.info["importer_type"]=="frg"):
+            if(project_button["contrib_button"]=="draft"):
+                if("question" in project.info.keys()):
+                    session["edit_question_list"]=[]
+                    session["edit_question"]={"images":[],"documents":[],"videos":[],"audios":[]}
+                    for i in ["images","documents","videos","audios"]:
+                        if(len(project.info["question"][i])>0):
+                            session["edit_question_list"].append(i)
+                    p=edit_draft_question(project)
+                    print "see"+p
+                    if(p!="-1"):
+                        return redirect_content_type(url_for('.'+p+"_edit",short_name=short_name))
+                    else:
+                        return "-1"
+                        #return  render_template('select_type.html',project=project_sanitized,pro_features=pro)
+
+            else:
+                return ("Sorry, You Edit the questions for draft project only.","alert")
+
+    return "Sorry , You did not imported questions from Fundamenta Research"
+    #return  render_template('select_type.html',arr=zipobj,project=project_sanitized,pro_features=pro)
+
+def edit_draft_question(project):
+    if(session.get("edit_question_list") is not None):
+        print session["edit_question_list"]
+        for i in session["edit_question_list"]:
+            session["edit_question_list"]=remove_values_from_list(session["edit_question_list"],i)
+            session["edit_question"][i]=project.info["question"][i]
+            return i
+    return "-1"
+def remove_values_from_list(the_list, val):
+   return [value for value in the_list if value != val]
+
+@blueprint.route('/<short_name>/tasks/test', methods=['GET', 'POST'])
+@login_required
+def test(short_name):
+    return short_name
+
+
+@blueprint.route('/<short_name>/tasks/images_edit', methods=['GET', 'POST'])
+@login_required
+def images_edit(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if request.method == 'POST':
+        session_count=len(session["edit_question"]["images"]);
+        session["edit_question"]["images"]=[]
+        for j in range(1,session_count+1):
+            ans=[]
+            type_q="normal"
+            print str(j)+'_question'
+            if(request.form.get(str(j)+'_question','')!=""):
+                que=request.form.get(str(j)+'_question')
+                if(request.form.get(str(j)+'_divcheckbox','')!=""):
+                    type_q="mcqs"
+                    if(request.form.get(str(j)+'_answer','')!=""):
+                        ans=request.form.getlist(str(j)+'_answer')
+
+                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                session["edit_question"]["images"].append(dictobj)
+
+        if(request.form.get('submit','')=="submit"):
+            p=edit_draft_question(project)
+            if(p!="-1"):
+                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+            else:
+                #return redirect_content_type(url_for('.success',short_name=short_name))
+                return "ok"
+        else:
+            type_q="normal"
+            answer=[]
+            if(request.form.get('question','')==""):
+                flash("Question field is Empty","warning")
+                return  render_template('images_edit.html',project=project_sanitized,
+                pro_features=pro)
+            if(request.form.get('checkbox','')!=""):
+                if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                    flash("Atleast 2 answers are required","warning")
+                    return  render_template('images_edit.html',project=project_sanitized,
+                    pro_features=pro)
+                else:
+                    type_q="mcqs"
+                    answer=request.form.getlist('answer')
+            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            session["edit_question"]["images"].append(dictobj)
+
+    return  render_template('images_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
 
 @blueprint.route('/<short_name>/tasks/select_type',methods=['GET', 'POST'])# this url is for the selecting types of folders which user want
 @login_required
@@ -158,10 +266,7 @@ def select_type(short_name):
     pro_features=pro) #sending the classified information to the select_type.html
 
 
-def store_questions(type_obj,dictobj,project):
-    project.info["question"][type_obj].extend(dictobj)
-    print project.info["question"][type_obj]
-    project_repo.update(project)
+
 
 def draft_project(project):
     if(session.get("question") is not None):
@@ -169,8 +274,12 @@ def draft_project(project):
         print session["question"]
     else:
         print "session is None"
+
     if "question" not in project.info.keys():
         project.info.update({"question":{"images":[],"videos":[],"documents":[],"audios":[]}})
+        project_repo.update(project)
+    if "importer_type" not in project.info.keys():
+        project.info.update({"importer_type":"frg"})
         project_repo.update(project)
     if session.get('question') is None:
         session["question"]={"images":[],"videos":[],"audios":[],"documents":[]}
@@ -215,19 +324,29 @@ def images(short_name):
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
+        type_q="normal"
+        answer=[]
         if(request.form.get('question','')==""):
             flash("Atleast 1 question is required","warning")
             return  render_template('images.html',project=project_sanitized,
             pro_features=pro)
-        session["question"]["images"]=request.form.getlist('question')
+        if(request.form.get('checkbox','')!=""):
+            if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                flash("Atleast 2 answers are required","warning")
+                return  render_template('images.html',project=project_sanitized,
+                pro_features=pro)
+            else:
+                type_q="mcqs"
+                answer=request.form.getlist('answer')
+        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        session["question"]["images"].append(dictobj)
         if(request.form.get('submit','')=="submit"):
                 p=draft_project(project)
                 if(p!="-1"):
                     return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
                 else:
                     return redirect_content_type(url_for('.success',short_name=short_name))
-    return  render_template('images.html',project=project_sanitized,
-    pro_features=pro) #we are going to tags.html
+    return  render_template('images.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
 
 
 
@@ -243,21 +362,28 @@ def documents(short_name):
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
+        type_q="normal"
+        answer=[]
         if(request.form.get('question','')==""):
-            flash("Atleast 1 question is required","warning")
+            flash("Please enter the question","warning")
             return  render_template('documents.html',project=project_sanitized,
             pro_features=pro)
-        dictobj={"question":request.form.getlist('question'),"answers":[]}
-        print dictobj# here we have to store it in database
-        session["question"]["documents"]=request.form.getlist('question')
-        #store_questions("documents",dictobj,project)
-        print project.info["question"]
-        if(request.form.get('submit','')=="submit"):
-            p=draft_project(project)
-            if(p!="-1"):
-                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+        if(request.form.get('checkbox','')!=""):
+            if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                flash("Atleast 2 answers are required","warning")
+                return  render_template('documents.html',project=project_sanitized,
+                pro_features=pro)
             else:
-                return redirect_content_type(url_for('.success',short_name=short_name))
+                type_q="mcqs"
+                answer=request.form.getlist('answer')
+        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        session["question"]["documents"].append(dictobj)
+        if(request.form.get('submit','')=="submit"):
+                p=draft_project(project)
+                if(p!="-1"):
+                    return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+                else:
+                    return redirect_content_type(url_for('.success',short_name=short_name))
     return  render_template('documents.html',project=project_sanitized,
     pro_features=pro) #we are going to tags.html
 
@@ -276,21 +402,28 @@ def videos(short_name):
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
+        type_q="normal"
+        answer=[]
         if(request.form.get('question','')==""):
-            flash("Atleast 1 question is required","warning")
+            flash("Please enter the question","warning")
             return  render_template('videos.html',project=project_sanitized,
             pro_features=pro)
-        dictobj={"question":request.form.getlist('question'),"answers":[]}
-        print dictobj# here we have to store it in database
-        session["question"]["videos"]=request.form.getlist('question')
-        #store_questions("videos",dictobj,project)
-        project_repo.update(project)
-        if(request.form.get('submit','')=="submit"):
-            p=draft_project(project)
-            if(p!="-1"):
-                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+        if(request.form.get('checkbox','')!=""):
+            if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                flash("Atleast 2 answers are required","warning")
+                return  render_template('videos.html',project=project_sanitized,
+                pro_features=pro)
             else:
-                return redirect_content_type(url_for('.success',short_name=short_name))
+                type_q="mcqs"
+                answer=request.form.getlist('answer')
+        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        session["question"]["videos"].append(dictobj)
+        if(request.form.get('submit','')=="submit"):
+                p=draft_project(project)
+                if(p!="-1"):
+                    return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+                else:
+                    return redirect_content_type(url_for('.success',short_name=short_name))
     return  render_template('videos.html',project=project_sanitized,
     pro_features=pro) #we are going to tags.html
 
@@ -306,19 +439,27 @@ def audios(short_name):
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
     if request.method == 'POST':
+        type_q="normal"
+        answer=[]
         if(request.form.get('question','')==""):
-            flash("Atleast 1 question is required","warning")
+            flash("Please enter the question","warning")
             return  render_template('audios.html',project=project_sanitized,
             pro_features=pro)
-        dictobj={"question":request.form.getlist('question'),"answers":[]}
-        print dictobj# here we have to store it in database
-        session["question"]["audios"]=request.form.getlist('question')
-        #store_questions("audios",dictobj,project)
-        if(request.form.get('submit','')=="submit"):
-            p=draft_project(project)
-            if(p!="-1"):
-                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+        if(request.form.get('checkbox','')!=""):
+            if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                flash("Atleast 2 answers are required","warning")
+                return  render_template('audios.html',project=project_sanitized,
+                pro_features=pro)
             else:
-                return redirect_content_type(url_for('.success',short_name=short_name))
+                type_q="mcqs"
+                answer=request.form.getlist('answer')
+        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        session["question"]["audios"].append(dictobj)
+        if(request.form.get('submit','')=="submit"):
+                p=draft_project(project)
+                if(p!="-1"):
+                    return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+                else:
+                    return redirect_content_type(url_for('.success',short_name=short_name))
     return  render_template('videos.html',project=project_sanitized,
     pro_features=pro) #we are going to tags.html
