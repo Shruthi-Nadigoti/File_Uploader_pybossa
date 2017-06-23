@@ -72,7 +72,9 @@ def add_task(project):
                 print "in if"
                 for file in os.listdir(project_path+"/"+i):
                     p=os.path.join(project_path+"/"+i,file)
-                    dictobj={"type":i,"path":p,"subtype":file.rsplit('.',1)[1].lower()}
+                    p=p[p.rfind("uploads"):]
+                    print p
+                    dictobj={"type":i,"url":"/"+p,"subtype":file.rsplit('.',1)[1].lower()}
                     s=json.dumps(dictobj)
                     #print s.type
                     task = Task(project_id=project_id)
@@ -174,6 +176,20 @@ def remove_values_from_list(the_list, val):
 def test(short_name):
     return short_name
 
+@blueprint.route('/<short_name>/tasks/edit_success', methods=['GET', 'POST'])
+@login_required
+def edit_success(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    return  render_template('edit_success.html',project=project_sanitized,
+    pro_features=pro) #we are going to tags.html
+
 
 @blueprint.route('/<short_name>/tasks/images_edit', methods=['GET', 'POST'])
 @login_required
@@ -206,10 +222,11 @@ def images_edit(short_name):
         if(request.form.get('submit','')=="submit"):
             p=edit_draft_question(project)
             if(p!="-1"):
-                return redirect_content_type(url_for('.'+p.lower(),short_name=short_name))
+                return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
             else:
-                #return redirect_content_type(url_for('.success',short_name=short_name))
-                return "ok"
+                project.info["question"]["images"]=session["edit_question"]["images"]
+                project_repo.update(project)
+                return redirect_content_type(url_for('.edit_success',short_name=short_name))
         else:
             type_q="normal"
             answer=[]
@@ -229,6 +246,176 @@ def images_edit(short_name):
             session["edit_question"]["images"].append(dictobj)
 
     return  render_template('images_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
+
+@blueprint.route('/<short_name>/tasks/documents_edit', methods=['GET', 'POST'])
+@login_required
+def documents_edit(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if request.method == 'POST':
+        session_count=len(session["edit_question"]["documents"]);
+        session["edit_question"]["documents"]=[]
+        for j in range(1,session_count+1):
+            ans=[]
+            type_q="normal"
+            print str(j)+'_question'
+            if(request.form.get(str(j)+'_question','')!=""):
+                que=request.form.get(str(j)+'_question')
+                if(request.form.get(str(j)+'_divcheckbox','')!=""):
+                    type_q="mcqs"
+                    if(request.form.get(str(j)+'_answer','')!=""):
+                        ans=request.form.getlist(str(j)+'_answer')
+
+                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                session["edit_question"]["documents"].append(dictobj)
+
+        if(request.form.get('submit','')=="submit"):
+            p=edit_draft_question(project)
+            if(p!="-1"):
+                return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
+            else:
+                project.info["question"]["documents"]=session["edit_question"]["documents"]
+                project_repo.update(project)
+                return redirect_content_type(url_for('.edit_success',short_name=short_name))
+        else:
+            type_q="normal"
+            answer=[]
+            if(request.form.get('question','')==""):
+                flash("Question field is Empty","warning")
+                return  render_template('documents_edit.html',project=project_sanitized,
+                pro_features=pro)
+            if(request.form.get('checkbox','')!=""):
+                if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                    flash("Atleast 2 answers are required","warning")
+                    return  render_template('documents_edit.html',project=project_sanitized,
+                    pro_features=pro)
+                else:
+                    type_q="mcqs"
+                    answer=request.form.getlist('answer')
+            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            session["edit_question"]["documents"].append(dictobj)
+
+    return  render_template('documents_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
+
+
+@blueprint.route('/<short_name>/tasks/videos_edit', methods=['GET', 'POST'])
+@login_required
+def videos_edit(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if request.method == 'POST':
+        session_count=len(session["edit_question"]["videos"]);
+        session["edit_question"]["videos"]=[]
+        for j in range(1,session_count+1):
+            ans=[]
+            type_q="normal"
+            print str(j)+'_question'
+            if(request.form.get(str(j)+'_question','')!=""):
+                que=request.form.get(str(j)+'_question')
+                if(request.form.get(str(j)+'_divcheckbox','')!=""):
+                    type_q="mcqs"
+                    if(request.form.get(str(j)+'_answer','')!=""):
+                        ans=request.form.getlist(str(j)+'_answer')
+
+                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                session["edit_question"]["videos"].append(dictobj)
+
+        if(request.form.get('submit','')=="submit"):
+            p=edit_draft_question(project)
+            if(p!="-1"):
+                return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
+            else:
+                project.info["question"]["videos"]=session["edit_question"]["videos"]
+                project_repo.update(project)
+                return redirect_content_type(url_for('.edit_success',short_name=short_name))
+        else:
+            type_q="normal"
+            answer=[]
+            if(request.form.get('question','')==""):
+                flash("Question field is Empty","warning")
+                return  render_template('videos_edit.html',project=project_sanitized,
+                pro_features=pro)
+            if(request.form.get('checkbox','')!=""):
+                if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                    flash("Atleast 2 answers are required","warning")
+                    return  render_template('videos_edit.html',project=project_sanitized,
+                    pro_features=pro)
+                else:
+                    type_q="mcqs"
+                    answer=request.form.getlist('answer')
+            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            session["edit_question"]["videos"].append(dictobj)
+
+    return  render_template('videos_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
+
+@blueprint.route('/<short_name>/tasks/audios_edit', methods=['GET', 'POST'])
+@login_required
+def audios_edit(short_name):
+    (project, owner, n_tasks, n_task_runs,
+     overall_progress, last_activity,
+     n_results) = project_by_shortname(short_name)
+    pro=pro_features()
+    project_button = add_custom_contrib_button_to(project, get_user_id_or_ip())
+    feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
+    autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
+    project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if request.method == 'POST':
+        session_count=len(session["edit_question"]["audios"]);
+        session["edit_question"]["audios"]=[]
+        for j in range(1,session_count+1):
+            ans=[]
+            type_q="normal"
+            print str(j)+'_question'
+            if(request.form.get(str(j)+'_question','')!=""):
+                que=request.form.get(str(j)+'_question')
+                if(request.form.get(str(j)+'_divcheckbox','')!=""):
+                    type_q="mcqs"
+                    if(request.form.get(str(j)+'_answer','')!=""):
+                        ans=request.form.getlist(str(j)+'_answer')
+
+                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                session["edit_question"]["audios"].append(dictobj)
+
+        if(request.form.get('submit','')=="submit"):
+            p=edit_draft_question(project)
+            if(p!="-1"):
+                return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
+            else:
+                project.info["question"]["audios"]=session["edit_question"]["audios"]
+                project_repo.update(project)
+                return redirect_content_type(url_for('.edit_success',short_name=short_name))
+        else:
+            type_q="normal"
+            answer=[]
+            if(request.form.get('question','')==""):
+                flash("Question field is Empty","warning")
+                return  render_template('audios_edit.html',project=project_sanitized,
+                pro_features=pro)
+            if(request.form.get('checkbox','')!=""):
+                if(request.form.getlist('answer')[0]=="" or request.form.getlist('answer')[1]==""):
+                    flash("Atleast 2 answers are required","warning")
+                    return  render_template('audios_edit.html',project=project_sanitized,
+                    pro_features=pro)
+                else:
+                    type_q="mcqs"
+                    answer=request.form.getlist('answer')
+            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            session["edit_question"]["audios"].append(dictobj)
+
+    return  render_template('audios_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
+
 
 @blueprint.route('/<short_name>/tasks/select_type',methods=['GET', 'POST'])# this url is for the selecting types of folders which user want
 @login_required
@@ -251,6 +438,9 @@ def select_type(short_name):
                 n=request.form.getlist('filepath')[0]#this is parent path of the folder which were unchecked by user
                 if os.path.exists(n+"/"+i.lower()):
                     shutil.rmtree(n+"/"+i.lower()) #deletion of folder
+        if(len(list_container)==0):
+            return  render_template('nofile.html',arr=zipobj,project=project_sanitized,
+            pro_features=pro)
         print "Going to function"
         p=draft_project(project)
         if(len(previous_data)!=0):
@@ -312,6 +502,7 @@ def success(short_name):
     pro_features=pro) #we are going to tags.html
 
 
+
 @blueprint.route('/<short_name>/tasks/images', methods=['GET', 'POST'])
 @login_required
 def images(short_name):
@@ -323,6 +514,8 @@ def images(short_name):
     feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if(session.get("question") is None):
+        return redirect_content_type(url_for('.success',short_name=short_name))
     if request.method == 'POST':
         type_q="normal"
         answer=[]
@@ -361,6 +554,8 @@ def documents(short_name):
     feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if(session.get("question") is None):
+        return redirect_content_type(url_for('.success',short_name=short_name))
     if request.method == 'POST':
         type_q="normal"
         answer=[]
@@ -401,6 +596,8 @@ def videos(short_name):
     feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if(session.get("question") is None):
+        return redirect_content_type(url_for('.success',short_name=short_name))
     if request.method == 'POST':
         type_q="normal"
         answer=[]
@@ -438,6 +635,8 @@ def audios(short_name):
     feature_handler = ProFeatureHandler(current_app.config.get('PRO_FEATURES'))
     autoimporter_enabled = feature_handler.autoimporter_enabled_for(current_user)
     project_sanitized, owner_sanitized = sanitize_project_owner(project_button, owner, current_user)
+    if(session.get("question") is None):
+        return redirect_content_type(url_for('.success',short_name=short_name))
     if request.method == 'POST':
         type_q="normal"
         answer=[]

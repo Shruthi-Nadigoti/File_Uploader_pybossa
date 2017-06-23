@@ -174,7 +174,7 @@ input{
 		}
 	}
 </script>
-<h2>{{_('Editing Questions in Images')}}</h2>
+<h2>{{_('Editing Questions in Videos')}}</h2>
  <form method="post" >
 	 <fieldset>
 	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -188,8 +188,8 @@ input{
  	 <input type="submit" class="btn btn-primary" name="submit" value="Add Question"/>
 
 		<div>
-      {% if(session["edit_question"]["images"])|length >0 %}
-        {% for i in session["edit_question"]["images"]%}
+      {% if(session["edit_question"]["videos"])|length >0 %}
+        {% for i in session["edit_question"]["videos"]%}
 				 <div style="background-color:#F0F0F0;padding:10px" name="no_questions">
 					 <!--<p style="color:green">Note: Empty text is not accepted.</p>-->
 					<input type="text" name={{loop.index|string+"_question"}} size="80" value="{{i['question']}}" onfocus="focus_in(this)" onblur="focus_out(this)"/>
