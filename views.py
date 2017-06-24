@@ -102,10 +102,13 @@ def upload_task(short_name):
                 if _file and allowed_file(_file.filename):
                     _file.save(os.path.join((parent_path+'/uploads/'+CONTAINER) , _file.filename))
                     if(check_file_size(parent_path+'/uploads/'+CONTAINER+"/"+_file.filename)):
-
                         global zipobj
                         zipobj=extract_files_local((parent_path+"/uploads/"+CONTAINER),_file.filename,project.id)
                         session["zzz"]=zipobj["zzz"]
+                        if "directory_names" not in project.info.keys():
+                            project.info.update({"directory_names":[]})
+                        project.info["directory_names"].append(session["zzz"])
+                        project_repo.update(project)
                         print zipobj["zzz"]
                         #add_task(project.id,zipobj["zzz"])
                         return redirect_content_type(url_for('.select_type',
