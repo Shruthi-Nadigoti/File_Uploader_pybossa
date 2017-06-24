@@ -29,7 +29,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
         self._importer_constructor_params = dict()
         
        ```
-   - Replace the code of delete(short_name) method in  pybossa/view/projects.py file
+   - Replace the code of delete(short_name) method in  pybossa/view/projects.py file as below code
    ```
    @blueprint.route('/<short_name>/delete', methods=['GET', 'POST'])
    @login_required
