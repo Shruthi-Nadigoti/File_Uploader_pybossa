@@ -58,7 +58,7 @@ def store_questions(project):
     if(session.get("question") is not None):
         for i in ["images","videos","documents","audios"]:
             if len(session["question"][i])!=0:
-                project.info["question"][i]=session["question"][i]
+                project.info["questionSet"][i]=session["question"][i]
             print session["question"]
     project_repo.update(project)
 
@@ -140,11 +140,11 @@ def edit_question(short_name):
     if "importer_type" in project.info.keys():
         if(project.info["importer_type"]=="frg"):
             if(project_button["contrib_button"]=="draft"):
-                if("question" in project.info.keys()):
+                if("questionSet" in project.info.keys()):
                     session["edit_question_list"]=[]
                     session["edit_question"]={"images":[],"documents":[],"videos":[],"audios":[]}
                     for i in ["images","documents","videos","audios"]:
-                        if(len(project.info["question"][i])>0):
+                        if(len(project.info["questionSet"][i])>0):
                             session["edit_question_list"].append(i)
                     p=edit_draft_question(project)
                     print "see"+p
@@ -165,7 +165,7 @@ def edit_draft_question(project):
         print session["edit_question_list"]
         for i in session["edit_question_list"]:
             session["edit_question_list"]=remove_values_from_list(session["edit_question_list"],i)
-            session["edit_question"][i]=project.info["question"][i]
+            session["edit_question"][i]=project.info["questionSet"][i]
             return i
     return "-1"
 def remove_values_from_list(the_list, val):
@@ -216,16 +216,16 @@ def images_edit(short_name):
                     if(request.form.get(str(j)+'_answer','')!=""):
                         ans=request.form.getlist(str(j)+'_answer')
 
-                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                dictobj={"questionString":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
                 session["edit_question"]["images"].append(dictobj)
 
         if(request.form.get('submit','')=="submit"):
             p=edit_draft_question(project)
+            project.info["questionSet"]["images"]=session["edit_question"]["images"]
+            project_repo.update(project)
             if(p!="-1"):
                 return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
             else:
-                project.info["question"]["images"]=session["edit_question"]["images"]
-                project_repo.update(project)
                 return redirect_content_type(url_for('.edit_success',short_name=short_name))
         else:
             type_q="normal"
@@ -242,7 +242,7 @@ def images_edit(short_name):
                 else:
                     type_q="mcqs"
                     answer=request.form.getlist('answer')
-            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
             session["edit_question"]["images"].append(dictobj)
 
     return  render_template('images_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
@@ -272,16 +272,16 @@ def documents_edit(short_name):
                     if(request.form.get(str(j)+'_answer','')!=""):
                         ans=request.form.getlist(str(j)+'_answer')
 
-                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                dictobj={"questionString":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
                 session["edit_question"]["documents"].append(dictobj)
 
         if(request.form.get('submit','')=="submit"):
             p=edit_draft_question(project)
+            project.info["questionSet"]["documents"]=session["edit_question"]["documents"]
+            project_repo.update(project)
             if(p!="-1"):
                 return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
             else:
-                project.info["question"]["documents"]=session["edit_question"]["documents"]
-                project_repo.update(project)
                 return redirect_content_type(url_for('.edit_success',short_name=short_name))
         else:
             type_q="normal"
@@ -298,7 +298,7 @@ def documents_edit(short_name):
                 else:
                     type_q="mcqs"
                     answer=request.form.getlist('answer')
-            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
             session["edit_question"]["documents"].append(dictobj)
 
     return  render_template('documents_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
@@ -329,16 +329,16 @@ def videos_edit(short_name):
                     if(request.form.get(str(j)+'_answer','')!=""):
                         ans=request.form.getlist(str(j)+'_answer')
 
-                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                dictobj={"questionString":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
                 session["edit_question"]["videos"].append(dictobj)
 
         if(request.form.get('submit','')=="submit"):
             p=edit_draft_question(project)
+            project.info["questionSet"]["videos"]=session["edit_question"]["videos"]
+            project_repo.update(project)
             if(p!="-1"):
                 return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
             else:
-                project.info["question"]["videos"]=session["edit_question"]["videos"]
-                project_repo.update(project)
                 return redirect_content_type(url_for('.edit_success',short_name=short_name))
         else:
             type_q="normal"
@@ -355,7 +355,7 @@ def videos_edit(short_name):
                 else:
                     type_q="mcqs"
                     answer=request.form.getlist('answer')
-            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
             session["edit_question"]["videos"].append(dictobj)
 
     return  render_template('videos_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
@@ -385,16 +385,16 @@ def audios_edit(short_name):
                     if(request.form.get(str(j)+'_answer','')!=""):
                         ans=request.form.getlist(str(j)+'_answer')
 
-                dictobj={"question":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
+                dictobj={"questionString":request.form.get(str(j)+'_question'),"answers":ans,"type":type_q}
                 session["edit_question"]["audios"].append(dictobj)
 
         if(request.form.get('submit','')=="submit"):
             p=edit_draft_question(project)
+            project.info["questionSet"]["audios"]=session["edit_question"]["audios"]
+            project_repo.update(project)
             if(p!="-1"):
                 return redirect_content_type(url_for('.'+p.lower()+"_edit",short_name=short_name))
             else:
-                project.info["question"]["audios"]=session["edit_question"]["audios"]
-                project_repo.update(project)
                 return redirect_content_type(url_for('.edit_success',short_name=short_name))
         else:
             type_q="normal"
@@ -411,7 +411,7 @@ def audios_edit(short_name):
                 else:
                     type_q="mcqs"
                     answer=request.form.getlist('answer')
-            dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+            dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
             session["edit_question"]["audios"].append(dictobj)
 
     return  render_template('audios_edit.html',project=project_sanitized,pro_features=pro) #we are going to tags.html
@@ -465,8 +465,8 @@ def draft_project(project):
     else:
         print "session is None"
 
-    if "question" not in project.info.keys():
-        project.info.update({"question":{"images":[],"videos":[],"documents":[],"audios":[]}})
+    if "questionSet" not in project.info.keys():
+        project.info.update({"questionSet":{"images":[],"videos":[],"documents":[],"audios":[]}})
         project_repo.update(project)
     if "importer_type" not in project.info.keys():
         project.info.update({"importer_type":"frg"})
@@ -474,7 +474,7 @@ def draft_project(project):
     if session.get('question') is None:
         session["question"]={"images":[],"videos":[],"audios":[],"documents":[]}
     for i in list_container:
-        if len(project.info["question"][i.lower()])==0 :
+        if len(project.info["questionSet"][i.lower()])==0 :
             b=list_container.index(i)
             del list_container[b]
             return i.lower()
@@ -531,7 +531,7 @@ def images(short_name):
             else:
                 type_q="mcqs"
                 answer=request.form.getlist('answer')
-        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
         session["question"]["images"].append(dictobj)
         if(request.form.get('submit','')=="submit"):
                 p=draft_project(project)
@@ -571,7 +571,7 @@ def documents(short_name):
             else:
                 type_q="mcqs"
                 answer=request.form.getlist('answer')
-        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
         session["question"]["documents"].append(dictobj)
         if(request.form.get('submit','')=="submit"):
                 p=draft_project(project)
@@ -613,7 +613,7 @@ def videos(short_name):
             else:
                 type_q="mcqs"
                 answer=request.form.getlist('answer')
-        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
         session["question"]["videos"].append(dictobj)
         if(request.form.get('submit','')=="submit"):
                 p=draft_project(project)
@@ -652,7 +652,7 @@ def audios(short_name):
             else:
                 type_q="mcqs"
                 answer=request.form.getlist('answer')
-        dictobj={"question":request.form.get('question'),"answers":answer,"type":type_q}
+        dictobj={"questionString":request.form.get('question'),"answers":answer,"type":type_q}
         session["question"]["audios"].append(dictobj)
         if(request.form.get('submit','')=="submit"):
                 p=draft_project(project)

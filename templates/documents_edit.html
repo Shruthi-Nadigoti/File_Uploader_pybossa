@@ -193,7 +193,7 @@ input{
         {% for i in session["edit_question"]["documents"]%}
 				 <div style="background-color:#F0F0F0;padding:10px" name="no_questions">
 					 <!--<p style="color:green">Note: Empty text is not accepted.</p>-->
-					<input type="text" name={{loop.index|string+"_question"}} size="80" value="{{i['question']}}" onfocus="focus_in(this)" onblur="focus_out(this)"/>
+					<input type="text" name={{loop.index|string+"_question"}} size="80" value="{{i['questionString']}}" onfocus="focus_in(this)" onblur="focus_out(this)"/>
 					<input type="button" name={{loop.index|string+"_deletequestion"}} value="X" onclick="deleteQuestion(this)"><br>
 					{% if i['type']=="mcqs"%}
 							<input type="checkbox" name={{loop.index|string+"_divcheckbox"}} value="yes" onchange="addButton(this)" checked>Do you need multiple choice answers?
