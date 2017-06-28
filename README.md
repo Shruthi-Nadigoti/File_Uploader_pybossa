@@ -38,7 +38,8 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
            for i in project.info["directory_names"]:
                if os.path.exists(i):
                    shutil.rmtree(i)#deleting the actual folder
-   ```
+    ```
+                   
    
       Now it look like below code
       
@@ -73,6 +74,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
        auditlogger.add_log_entry(project, None, current_user)
        flash(gettext('Project deleted!'), 'success')
        return redirect_content_type(url_for('account.profile', name=current_user.name))
+       
    ```
         
         
