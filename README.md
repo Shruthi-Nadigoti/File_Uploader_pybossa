@@ -39,8 +39,8 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
                if os.path.exists(i):
                    shutil.rmtree(i)#deleting the actual folder
    ```
-   Now it look like below code
-   ```
+      Now it look like below code
+     ```
    @blueprint.route('/<short_name>/delete', methods=['GET', 'POST'])
    @login_required
    def delete(short_name):
@@ -63,7 +63,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
                            pro_features=pro,
                            csrf=generate_csrf())
            return handle_content_type(response)
-       if("directory_names" in project.info.keys()):
+       #### if("directory_names" in project.info.keys()):
            for i in project.info["directory_names"]:
                if os.path.exists(i):
                    shutil.rmtree(i)#deleting the actual folder
