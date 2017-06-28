@@ -1,0 +1,10 @@
+<!-- extend base layout -->
+{% extends "/projects/base.html" %}
+{% include "_flash_messages.html" %}
+{% from "projects/_helpers.html" import render_project_card_option %}
+{% set active_link  = "tasks" %}
+{% from "_formhelpers.html" import render_field, render_checkbox_field %}
+
+{% block projectcontent %}
+     <h1>Successfully Edited</h1>
+{% endblock %}

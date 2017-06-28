@@ -1,0 +1,86 @@
+<!-- extend base layout -->
+{% extends "/projects/base.html" %}
+{% include "_flash_messages.html" %}
+{% from "projects/_helpers.html" import render_project_card_option %}
+{% set active_link  = "tasks" %}
+{% from "_formhelpers.html" import render_field, render_checkbox_field %}
+
+{% block projectcontent %}
+<style>
+input{
+		color:gray;
+		padding:10px;
+		border:2px solid gray;
+		border-radius:5px;
+		margin:5px;
+
+}
+
+</style>
+<script>
+	function addAnswer(){
+		try{
+		var d=document.getElementById("add");
+		var y=document.getElementById("add").children;
+		x=0;
+		 for(var i=0;i<y.length;i++)
+		 {
+		 	if(y[i].value=="")
+		 		d.removeChild(y[i]);
+		 }
+		 createE(d)
+		}catch(e)
+		{
+			alert(e);
+		}
+	}
+	function createE(d){
+		input=document.createElement("input");
+		input.setAttribute("type","text");
+		input.setAttribute("_class","span4");
+		input.setAttribute("size","50");
+		input.setAttribute("placeholder","Add your Answers here");
+		input.setAttribute("name","answer");
+		d.appendChild(input);
+
+	}
+	function addButton(e){
+		try{
+		if(e.checked)
+  	{
+		  var d=document.getElementById("add");
+			x='<input type="text" _class="span4" size="50" placeholder="Add your Answers here" name="answer"/>'
+			d.innerHTML=x+x
+			//createE(d);
+			//createE(d);
+			var p=document.getElementById("button");
+			p.innerHTML='<button type="button" class="btn btn-primary" onclick="addAnswer()">Add Answer</button>'
+  	}
+		else{
+			var d=document.getElementById("add");
+			d.innerHTML=""
+			var d=document.getElementById("button");
+			d.innerHTML=""
+		}
+	}catch(e)
+	{
+		alert(e)
+	}
+	}
+</script>
+<h2>{{_('Add Question For Documents')}}</h2>
+ <form method="post">
+	 <fieldset>
+	 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+	 <input type="text" name="question" placeholder="Add you question here">
+   <input type="submit" class="btn btn-primary" name="submit" value="addquestion"/>
+	 <br>
+	 <input type="checkbox" name="checkbox" value="yes" onchange="addButton(this)">Do you need multiple choice answers?
+		<div id="add">
+		</div>
+		<span id="button">
+	  </span>
+		<input type="submit" class="btn btn-primary" name="submit" value="submit"/>
+		</fieldset>
+		</form>
+{% endblock %}

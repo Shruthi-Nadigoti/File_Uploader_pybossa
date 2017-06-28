@@ -1,0 +1,23 @@
+{% extends "/projects/base.html" %}
+{% include "_flash_messages.html" %}
+{% from "projects/_helpers.html" import render_project_card_option %}
+{% set active_link  = "tasks" %}
+{% from "_formhelpers.html" import render_field, render_checkbox_field %}
+
+{% block projectcontent %}
+
+<h2>{{_('Upload File')}}</h2>
+<form method="post" enctype="multipart/form-data">
+    <fieldset>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div>
+            <img id="uploadPreview" style="max-width: 100%">
+        </div>
+        <div style="border:2px solid gray;border-radius:5px;padding:10px">{{ upload_form.avatar}}</div>
+        <div class="form-actions">
+            <button type="submit" name='btn' value="Upload" class="btn btn-primary">{{ _('Upload') }}</button>
+        </div>
+    </fieldset>
+</form>
+{% endblock %}
+<!-- Update form for project data-->

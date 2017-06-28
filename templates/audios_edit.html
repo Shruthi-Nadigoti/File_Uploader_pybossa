@@ -1,0 +1,227 @@
+<!-- extend base layout -->
+{% extends "/projects/base.html" %}
+{% include "_flash_messages.html" %}
+{% from "projects/_helpers.html" import render_project_card_option %}
+{% set active_link  = "tasks" %}
+{% from "_formhelpers.html" import render_field, render_checkbox_field %}
+
+{% block projectcontent %}
+<style>
+input{
+
+		padding:10px;
+		border:1px solid gray;
+		border-radius:5px;
+		margin:5px;
+
+}
+#q{
+	border:1px solid maroo;
+}
+#a{
+	border:1px solid gree;
+}
+</style>
+<script>
+	var global_str="";
+	function focus_out(e){
+			//alert("focus_out")
+		if(e.value=="")
+			{
+				e.value=global_str;
+			}
+	}
+	function focus_in(e){
+		//alert("focus_in")
+		//x=e.name.substring(0,e.name.indexOf("_"));
+
+		global_str=e.value
+
+	}
+	function addAnswer(){
+		try{
+		var d=document.getElementById("question");
+		input=document.createElement("input");
+		input.setAttribute("type","text");
+		input.setAttribute("_class","span4");
+		input.setAttribute("size","30");
+		input.setAttribute("placeholder","Add your Question here");
+		input.setAttribute("name","question");
+		d.appendChild(input);
+		}catch(e)
+		{
+			alert(e);
+		}
+	}
+	function addButtonAnswer(e){
+		try{
+		  x=e.name.substring(0,e.name.indexOf("_"));
+			div=document.createElement("div");
+			y=document.getElementsByName(x+"_answerblock");
+			div.innerHTML='<div name="'+x+'_answerblock"><input id="a"type="text" name="'+x+'_answer" size="30" value="yes" onfocus="focus_in(this)" onblur="focus_out(this)"><input type="button" name="'+x+'_checkbox" value="X" onclick="deleteAnswer(this)"></div>';
+			e.parentNode.insertBefore(div,e);
+			if(y.length>=2)
+			{
+
+				m=document.getElementById(x+"_error");
+				m.innerHTML="";
+			}
+
+		}catch(e)
+		{
+			alert(e);
+		}
+	}
+	function deleteAnswer(e)
+	{
+			try{
+			//alert(e.name)
+			x=e.name.substring(0,e.name.indexOf("_"));
+			y=document.getElementsByName(x+"_answer");
+			if(y.length>2)
+			{
+				e.parentNode.removeChild(e.parentNode.children[0])
+				e.parentNode.removeChild(e)
+			}
+			else {
+					m=document.getElementById(x+"_error");
+					m.innerHTML="Error: You should have Atleast 2 answers";
+			}
+
+
+		}catch(e)
+		{
+				alert(e)
+		}
+	}
+	function deleteQuestion(e)
+	{
+			try{
+					y=document.getElementsByName("no_questions");
+					if(y.length>1){
+							e.parentNode.parentNode.removeChild(e.parentNode);
+						}
+					else {
+						x=e.name.substring(0,e.name.indexOf("_"));
+						m=document.getElementById(x+"_error");
+						m.innerHTML="Error: At least You should have 1 question";
+					}
+		}catch(e)
+		{
+				alert(e)
+		}
+	}
+	function addButton(e)
+	{
+		try{
+			x=e.name.substring(0,e.name.indexOf("_"));
+			y=document.getElementsByName(x+"_divanswer")[0];
+			if(e.checked){
+
+					y.innerHTML='<div name="'+x+'_answerblock"><input id="a"type="text" name="'+x+'_answer" size="30" onfocus="focus_in(this)" value="yes" onblur="focus_out(this)"><input type="button" name="'+x+'_checkbox" value="X" onclick="deleteAnswer(this)"></div><div name="'+x+'_answerblock"><input id="a"type="text" name="'+x+'_answer" size="30" value="no" onfocus="focus_in(this)" onblur="focus_out(this)"><input type="button" name="'+x+'_checkbox" value="X" onclick="deleteAnswer(this)"></div><input type="button" name="'+x+'_addanswer" value="Add Answer" onclick="addButtonAnswer(this)">';
+			}else {
+				y.innerHTML="";
+				m=document.getElementById(x+"_error");
+				m.innerHTML="";
+		}
+
+		}catch(e)
+		{
+				alert(e)
+		}
+	}
+	function addButtonNew(e){
+		try{
+		if(e.checked)
+  	{
+		  var d=document.getElementById("add");
+			x='<input type="text" _class="span4" size="50" placeholder="Add your Answers here" name="answer"/>'
+			d.innerHTML=x+x
+			var p=document.getElementById("button");
+			p.innerHTML='<button type="button" class="btn btn-primary" onclick="addNewAnswer()">Add Answer</button>'
+  	}
+		else{
+			var d=document.getElementById("add");
+			d.innerHTML=""
+			var d=document.getElementById("button");
+			d.innerHTML=""
+		}
+	}catch(e)
+	{
+		alert(e)
+	}
+	}
+	function addNewAnswer(){
+		try{
+		var d=document.getElementById("add");
+		var y=document.getElementById("add").children;
+		x=0;
+		 for(var i=0;i<y.length;i++)
+		 {
+		 	if(y[i].value=="")
+		 		d.removeChild(y[i]);
+		 }
+	 		input=document.createElement("input");
+	 		input.setAttribute("type","text");
+	 		input.setAttribute("_class","span4");
+	 		input.setAttribute("size","50");
+	 		input.setAttribute("placeholder","Add your Answers here");
+	 		input.setAttribute("name","answer");
+	 		d.appendChild(input);
+		}catch(e)
+		{
+			alert(e);
+		}
+	}
+</script>
+
+<h2>{{_('Editing Questions in Audios')}}</h2>
+ <form method="post" >
+	 <fieldset>
+	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+	<h4><b>Add New Question</b></h4>
+ 	<input type="text" name="question" placeholder="Add you question here">
+ 	<br>
+ 	<input type="checkbox" name="checkbox" onchange="addButtonNew(this)">Do you need multiple choice answers?
+ 	 <div id="add">
+ 	 </div>
+ 	 <span id="button"></span>
+ 	 <input type="submit" class="btn btn-primary" name="submit" value="Add Question"/>
+
+		<div>
+      {% if(session["edit_question"]["audios"])|length >0 %}
+        {% for i in session["edit_question"]["audios"]%}
+				 <div style="background-color:#F0F0F0;padding:10px" name="no_questions">
+					 <!--<p style="color:green">Note: Empty text is not accepted.</p>-->
+					<input type="text" name={{loop.index|string+"_question"}} size="80" value="{{i['questionString']}}" onfocus="focus_in(this)" onblur="focus_out(this)"/>
+					<input type="button" name={{loop.index|string+"_deletequestion"}} value="X" onclick="deleteQuestion(this)"><br>
+					{% if i['type']=="mcqs"%}
+							<input type="checkbox" name={{loop.index|string+"_divcheckbox"}} value="yes" onchange="addButton(this)" checked>Do you need multiple choice answers?
+					{% else %}
+							<input type="checkbox" name={{loop.index|string+"_divcheckbox"}} value="yes" onchange="addButton(this)"/>Do you need multiple choice answers?
+					{% endif%}
+					<div name="{{loop.index|string+'_divanswer'}}">
+						{% set c=loop.index %}
+					{%for j in i["answers"]%}
+						<div name="{{c|string+'_answerblock'}}">
+						<input id="a"type="text" name={{c|string+'_answer'}} value="{{j}}"  size="30" onfocus="focus_in(this)" onblur="focus_out(this)"/>
+						<input type="button" name={{c|string+'_checkbox'}} value="X" onclick="deleteAnswer(this)">
+					</div>
+					{%endfor%}
+					{% if i["answers"]|length >0 %}
+							<input type="button" name={{loop.index|string+"_addanswer"}} value="Add Answer" onclick="addButtonAnswer(this)"/>
+					{% endif %}
+					</div>
+					<div id="{{loop.index|string+'_error'}}" style="color:maroon">{{i["error"]}}</div>
+				</div>
+				 <br>
+
+				{% endfor%}
+      {% endif%}
+
+		</div>
+		<input type="submit" class="btn btn-primary" name="submit" value="submit"/>
+		</fieldset>
+		</form>
+
+{% endblock %}

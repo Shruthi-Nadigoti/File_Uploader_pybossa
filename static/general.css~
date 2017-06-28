@@ -1,0 +1,8 @@
+input{
+		color:gray;
+		padding:10px;
+		border:2px solid gray;
+		border-radius:5px;
+		margin:5px;
+
+}

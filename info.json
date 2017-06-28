@@ -1,0 +1,8 @@
+{
+    "identifier": "file_uploader",
+    "name": "File Uploader",
+    "author": "shruthi",
+    "license": "-",
+    "description": "A File uploading Plugin.",
+    "version": "1.0.0"
+}
