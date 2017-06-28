@@ -14,9 +14,12 @@ explanation=_('Use files from local machine'), link=url_for("file_test.upload_ta
 short_name=project.short_name, type='frg'), link_action_text=_('Import data'), icon='upload')}} 
 
 ```
-
-  - In pybossa/importers/importer.py file make some changes to the constructor as below code
-  
+  - create a directory called "local_upload_directory" in pybossa/uploads directory
+  - In pybossa/importers/importer.py file add below line of code to the constructor
+    ```
+        frg=""
+    ```
+    Now it look like below code
     ```
      def __init__(self):
         """Init method."""
@@ -29,7 +32,14 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
         self._importer_constructor_params = dict()
         
        ```
-   - Replace the code of delete(short_name) method in  pybossa/view/projects.py file as below code
+   - In pybossa/view/projects.py file add below lines of code to the delete(short_name) method
+   ```
+      if("directory_names" in project.info.keys()):
+           for i in project.info["directory_names"]:
+               if os.path.exists(i):
+                   shutil.rmtree(i)#deleting the actual folder
+   ```
+   Now it look like below code
    ```
    @blueprint.route('/<short_name>/delete', methods=['GET', 'POST'])
    @login_required
