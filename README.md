@@ -40,6 +40,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
                    shutil.rmtree(i)#deleting the actual folder
    ```
       Now it look like below code
+      
    ```
    @blueprint.route('/<short_name>/delete', methods=['GET', 'POST'])
    @login_required
