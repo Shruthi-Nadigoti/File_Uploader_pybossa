@@ -19,7 +19,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
     ```
         frg=""
     ```
-    Now it look like below code
+    Now it looks like below code
     ```
      def __init__(self):
         """Init method."""
@@ -41,7 +41,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
      ```
                    
    
-      Now it look like below code
+      Now it looks like below code
       
    ```
    @blueprint.route('/<short_name>/delete', methods=['GET', 'POST'])
