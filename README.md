@@ -8,7 +8,7 @@ This is Pybossa plugin to import the files from the local machine.
    - Write the following code in it
    
 ``` 
-** {% from "projects/_helpers.html" import render_project_card_option %} **
+{% from "projects/_helpers.html" import render_project_card_option %} 
 {{ render_project_card_option(project, upload_method, title=_('Fundamental Research Group'), 
 explanation=_('Use files from local machine'), link=url_for("file_test.upload_task",
 short_name=project.short_name, type='frg'), link_action_text=_('Import data'), icon='upload')}} 
