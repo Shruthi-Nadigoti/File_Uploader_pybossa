@@ -4,7 +4,8 @@ This is Pybossa plugin to import the files from the local machine.
 ## Installation
 - Clone this repository and rename it to file_uploader and paste it in pybossa/pybossa/plugins directory.
 - Make the following changes 
-   - Create frg.html file in pybossa/themes/default/templates/projects/tasks directory.
+   - Create a directory named as **local_upload_directory** in pybossa/uploads directory
+   - Create frg.html file in pybossa/pybossa/themes/default/templates/projects/tasks directory.
    - Write the following code in it
    
 ``` 
@@ -15,11 +16,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
 
 ```
 
-
-  - In pybossa/importers/importer.py file make some changes to the constructor as below code
-
-  - create a directory called "local_upload_directory" in pybossa/uploads directory
-  - In pybossa/importers/importer.py file add below line of code to the constructor
+  - In pybossa/pybossa/importers/importer.py file add below line of code to the constructor
     ```
         frg=""
     ```
@@ -38,7 +35,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
         
        ```
 
-   - In pybossa/view/projects.py file add below lines of code to the delete(short_name) method
+   - In pybossa/pybossa/view/projects.py file add below lines of code to the delete(short_name) method
      ```
       if("directory_names" in project.info.keys()):
            for i in project.info["directory_names"]:
@@ -88,7 +85,7 @@ Now restart the server.You can see Fundamental Research Importer(File Uploader) 
 
 ## How to Import the files
 - ### Upload File
-     - Go to importers and choose the fundamental Research importer
+     - Go to importers and choose the **Local importer**
      - Upload the file (it accepts only zip and tar.gz extension files.In this we can put images,documents,videos,audios related files.We can have subfolders also)
 - ### Add Question
      - We should write the questions for files which we have uploaded.That's it you can see "successfully uploaded " message on your screen
