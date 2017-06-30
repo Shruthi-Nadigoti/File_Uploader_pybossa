@@ -28,6 +28,8 @@ def extract_files_local(fullpath,filename,project_id): #to extract the files ful
     for f in x: #looping through the files to classify
          srcfullpath = fullpath+ "/" + f
          #print srcfullpath
+         if(f.startswith("__MAC")):
+            continue
          if('.' in f):
                 m=time.time()
                 f_name=srcfullpath[srcfullpath.rfind('/')+1:] #getting only filename

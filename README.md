@@ -15,8 +15,16 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
 
 ```
 
+
   - In pybossa/importers/importer.py file make some changes to the constructor as below code
-  
+
+  - create a directory called "local_upload_directory" in pybossa/uploads directory
+  - In pybossa/importers/importer.py file add below line of code to the constructor
+    ```
+        frg=""
+    ```
+    Now it looks like below code
+
     ```
      def __init__(self):
         """Init method."""
@@ -29,7 +37,18 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
         self._importer_constructor_params = dict()
         
        ```
-   - Replace the code of delete(short_name) method in  pybossa/view/projects.py file as below code
+
+   - In pybossa/view/projects.py file add below lines of code to the delete(short_name) method
+     ```
+      if("directory_names" in project.info.keys()):
+           for i in project.info["directory_names"]:
+               if os.path.exists(i):
+                   shutil.rmtree(i)#deleting the actual folder
+     ```
+                   
+   
+      Now it looks like below code
+
    ```
    @blueprint.route('/<short_name>/delete', methods=['GET', 'POST'])
    @login_required
@@ -61,6 +80,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
        auditlogger.add_log_entry(project, None, current_user)
        flash(gettext('Project deleted!'), 'success')
        return redirect_content_type(url_for('account.profile', name=current_user.name))
+
    ```
         
         
