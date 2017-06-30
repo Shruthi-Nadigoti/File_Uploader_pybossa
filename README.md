@@ -16,7 +16,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
 
 ```
 
-   - In pybossa/pybossa/importers/importer.py file add below line of code to the constructor
+  - In pybossa/pybossa/importers/importer.py file add below line of code to the constructor
     ```
         frg=""
     ```
@@ -35,7 +35,7 @@ short_name=project.short_name, type='frg'), link_action_text=_('Import data'), i
         
        ```
 
-    - In pybossa/pybossa/view/projects.py file add below lines of code to the delete(short_name) method
+   - In pybossa/pybossa/view/projects.py file add below lines of code to the delete(short_name) method
      ```
       if("directory_names" in project.info.keys()):
            for i in project.info["directory_names"]:
